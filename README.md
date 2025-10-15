@@ -15,25 +15,15 @@ This repository contains the CMSE 802 final project and all relevant files.
 The layout of the directory is in the following structure:
 
 ```
-├── data/
-│    ├── raw - raw data from QM9 database/
-│    └── processed - processed data with missing RG2 vals calculated/
+├── docs - documentation files/
 │
-├── reports - contains project report/
+├── notebooks - Jupyter notebooks for analysis and visualization/
 │
-├── results - contains project results for each ML model/
+├── results - contains project results (outputs and figures)/
 │
-├── src - contains relevant code/
-│   ├── data/
-│   ├── physicochemical discriptors/features/
-│   ├── models/
-|   │   ├── RR/
-│   │   └── ANN/
-│   └── visualization/
+├── sample_data - contains a sample of 100 data files/
 │
-├── statistics/
-│   ├── R2/
-│   └── RMSE/
+├── src - contains source code and scripts/
 │
 ├── tests - unit tests/
 │

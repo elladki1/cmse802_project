@@ -201,7 +201,7 @@ def pearson_correlation(df, target='RG2', top_count=20):
     # get a heat map
     plt.figure(figsize=(20,20))
     sns.heatmap(reduced_df.corr(), cmap="coolwarm", center=0, annot=True, fmt=".2f")
-    plt.savefig(f"corr_heatmap_top_{top_count}_feats.png", dpi=300)
+    plt.savefig(f"../results/corr_heatmap_top_{top_count}_feats.png", dpi=300)
     return reduced_df
 
 def filter_outliers(df, q_min=0.001, q_max=0.999):
@@ -209,7 +209,7 @@ def filter_outliers(df, q_min=0.001, q_max=0.999):
     # histogram of data before filtering 
     df.hist(figsize=(10,10), bins=50)
     plt.tight_layout()  # make sure subplots don't overlap
-    plt.savefig("hist_unfiltered.png", dpi=300)
+    plt.savefig("../results/hist_unfiltered.png", dpi=300)
 
     # define a percentile value range for features
     perc_range = pd.DataFrame([df.quantile(q=q_min, axis=0), df.quantile(q=q_max, axis=0)])
@@ -223,7 +223,7 @@ def filter_outliers(df, q_min=0.001, q_max=0.999):
     
     df.hist(figsize=(10,10), bins=50)
     plt.tight_layout()  # make sure subplots don't overlap
-    plt.savefig("hist_filtered.png", dpi=300)
+    plt.savefig("../results/hist_filtered.png", dpi=300)
     
     return df
 
@@ -238,7 +238,7 @@ def log_transform(df, exclude=None, skew_thresh=1.0):
             df[col] = np.log2(df[col])
     df.hist(figsize=(10,10), bins=50)
     plt.tight_layout()  # make sure subplots don't overlap
-    plt.savefig("hist_logged.png", dpi=300)
+    plt.savefig("../results/hist_logged.png", dpi=300)
     return df
 
 def main():

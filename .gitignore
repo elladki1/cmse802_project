@@ -207,4 +207,4 @@ marimo/_lsp/
 __marimo__/
 
 # ignore data file
-/mnt/home/elladki1/CMSE802/Final_Project/cmse802_project/data/
+data/

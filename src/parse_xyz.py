@@ -1,7 +1,8 @@
 """
 Author: Rana Elladki
 Data: 10/01/2025
-Description: Parse through xyz files containing molecules from QM9 database
+Description: Parse through xyz files containing molecules from QM9 database and 
+                saves into pandas dataframe
 """
 
 import os
@@ -10,7 +11,21 @@ import pandas as pd
 def safe_float(x):
     """
     Convert a string to float, handling Fortran-style scientific notation.
-    Example: '2.1997*^-6' -> 2.1997e-6
+
+    Parameters 
+    ----------
+    x: str
+      Fortran-style scientific notation string to convert into float
+
+    Returns
+    -------
+    float 
+
+    Examples
+    --------
+    >>> num = safe_float('2.1997*^-6')
+    >>> num 
+    2.1997e-6
     """
     if isinstance(x, str) and "*^" in x:
         x = x.replace("*^", "e")
@@ -19,7 +34,28 @@ def safe_float(x):
 
 def parse_xyz_file(filename):
     """
-    Parse a QM9-style .xyz file into structured data.
+    Parse a QM9-style .xyz file to extract information into a dictionary.
+
+    Parameters
+    ----------
+    filename: str
+            File containing a molecule and its relevant data
+    
+    Returns
+    -------
+    dict
+        Dictionary containing:
+        - 'id': molecule index (int)
+        - 'natoms': number of atoms (int)
+        - 'properties': molecular properties (dict)
+        - 'atoms': list of atom dicts with keys ['element', 'x', 'y', 'z', 'charge']
+        - 'frequencies': list of floats
+        - 'smiles': dict with keys ['gdb9', 'relaxed']
+        - 'inchi': dict with keys ['gdb9', 'relaxed']
+    
+    Examples
+    --------
+    >>> processed_dict = parse_xyz_file('filename.xyz')
     """
     properties_list = [
         "tag", "index", "A", "B", "C", "mu", "alpha", "homo", "lumo",
@@ -76,8 +112,33 @@ def parse_xyz_file(filename):
 
 def parse_xyz_folder(folder, as_dataframe=False, cache_file="xyz_data.parquet", check_cache=True):
     """
-    Parse all .xyz files in a folder by calling parse_xyz_file().
-    Uses caching for speed if check_cache=True.
+    Parse all .xyz files in a spcified folder and save formatted output into list 
+        or pandas dataframe. Uses caching for speed. If check_cache=True, checks
+        if the data has been parsed and save into a parquet file before pasting 
+        through entire directory again.
+    
+    Parameters
+    ----------
+    folder: str
+        Folder containing .xyz files.
+    as_dataframe: bool, default=False
+        Whether to return data as a pandas dataframe
+    cache_file: str, default='xyz_data.parquet'
+        Path to cache file for storing parsed data.
+    check_cache: bool, default=True
+        If True, load from cache if available.
+    
+    Returns
+    -------
+    pandas.DataFrame or list
+        Preprocessed molecular data ready for modeling. If `as_dataframe` is False,
+        returns a list of dictionaries.
+
+    Example
+    -------
+    >>> folder = '/raw_data/'
+    >>> df = parse_xyz_folder(folder, as_datafram=True, cache_file='xyz.parquet',
+                check_cache=True)
     """
     cache_path = os.path.join(folder, cache_file)
 

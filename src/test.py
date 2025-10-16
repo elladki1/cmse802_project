@@ -56,7 +56,7 @@ def compute_rg2(molecule):
     molecule: dict with {'ID': int, 'COORDS': numpy array of dicts with 'element','x','y','z'}
     i need to find a better way to do this dictionary
     """
-    coords = molecule['COORDS']
+    coords = molecule[0]["COORDS"]
     
     masses = np.array([ptable.GetAtomicWeight(atom['element']) for atom in coords])
     positions = np.array([[atom['x'], atom['y'], atom['z']] for atom in coords])

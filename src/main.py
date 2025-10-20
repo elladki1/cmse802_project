@@ -14,6 +14,7 @@ from multiprocessing import Pool, cpu_count
 # internal imports
 from parse_xyz import parse_xyz_folder 
 import extract_desc
+import eda
 
 def prompt_if_missing(args):
     """Prompt the user for missing arguments interactively."""
@@ -65,19 +66,19 @@ def main():
 
     # perform pearson coefficient correlation analysis to get a dataframe of only the top features
     print("Performing Pearson correlation analysis...")
-    reduced_df = extract_desc.pearson_correlation(copy.deepcopy(desc_df), top_count=args.top)
-
+    reduced_df = eda.pearson_correlation(copy.deepcopy(desc_df), top_count=args.top)
     # filter outliers
     print("Filtering outliers...")
-    filtered_df = extract_desc.filter_outliers(copy.deepcopy(reduced_df))
+    filtered_df = eda.filter_outliers(copy.deepcopy(reduced_df))
 
     # log transform skewed data
     print("Log transforming skewed features...")
-    log_df = extract_desc.log_transform(copy.deepcopy(filtered_df))
+    log_df = eda.log_transform(copy.deepcopy(filtered_df))
+    print(log_df.tail())
 
     # split the data into training/validation/test sets
     print("Splitting data for ML...")
-    X_train, X_val, X_test, y_train, y_val, y_test = extract_desc.split_data(log_df)
+    X_train, X_val, X_test, y_train, y_val, y_test = eda.split_data(log_df)
 
     
     print(f"Pipeline complete in {time.time() - start_time:.2f} seconds")

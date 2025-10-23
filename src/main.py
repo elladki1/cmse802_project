@@ -66,14 +66,14 @@ def main():
 
     # perform pearson coefficient correlation analysis to get a dataframe of only the top features
     print("Performing Pearson correlation analysis...")
-    reduced_df = eda.pearson_correlation(copy.deepcopy(desc_df), top_count=args.top)
+    reduced_df = eda.pearson_correlation(copy.deepcopy(desc_df), outdir=args.output, top_count=args.top)
     # filter outliers
     print("Filtering outliers...")
-    filtered_df = eda.filter_outliers(copy.deepcopy(reduced_df))
+    filtered_df = eda.filter_outliers(copy.deepcopy(reduced_df), outdir=args.output)
 
     # log transform skewed data
     print("Log transforming skewed features...")
-    log_df = eda.log_transform(copy.deepcopy(filtered_df))
+    log_df = eda.log_transform(copy.deepcopy(filtered_df), outdir=args.output)
     print(log_df.tail())
 
     # split the data into training/validation/test sets

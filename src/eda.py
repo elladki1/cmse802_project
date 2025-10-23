@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
+import os
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
 
-def pearson_correlation(df, target='RG2', top_count=20):
+def pearson_correlation(df, outdir, target='RG2', top_count=10):
     """
     Perform Pearson correlation coefficient analysis to identify descriptors
     that have the strongest relationship with the target variable (e.g., RG2).
@@ -23,10 +23,12 @@ def pearson_correlation(df, target='RG2', top_count=20):
     ----------
     df : pandas.DataFrame
         Input DataFrame containing molecular descriptors and the target variable.
+    outdir : str
+        Output directory to save plots to.
     target : str, optional
         Name of the target variable column. Default is 'RG2'.
     top_count : int, optional
-        Number of top correlated features to select. Default is 20.
+        Number of top correlated features to select. Default is 10.
 
     Returns
     -------
@@ -38,7 +40,7 @@ def pearson_correlation(df, target='RG2', top_count=20):
     -----
     - The function removes the 'ID' column if present.
     - A correlation heatmap is saved to
-      `../results/corr_heatmap_top_<top_count>_feats.png`.
+      `<outdir>/corr_heatmap_top_<top_count>_feats.png`.
     
     Examples
     --------
@@ -49,20 +51,21 @@ def pearson_correlation(df, target='RG2', top_count=20):
     df = df.drop(["ID"], axis=1)
     # get the correlation matrix using pearson correlation coefficient analysis
     corr_pearson = df.corr(method='pearson')
-    # get the rg2 correlation column and remove rg2's correaltion with itself, because it is just 1
+    # get the rg2 correlation column and remove rg2's correlation with itself, because it is just 1
     rg2_corr = corr_pearson[target].drop(target).abs().sort_values(ascending=False)
     # get top 20 features
     strong_corr = rg2_corr.index[:top_count]
     # reduced descriptor dataframe
     reduced_df = df[strong_corr.tolist() + [target]]
     # get a heat map
-    plt.figure(figsize=(20,20))
+    outfile = os.path.join(outdir,f"corr_heatmap_top_{top_count}_feats.png")
+    plt.figure(figsize=(10,10))
     sns.heatmap(reduced_df.corr(), cmap="coolwarm", center=0, annot=True, fmt=".2f")
-    plt.savefig(f"../results/corr_heatmap_top_{top_count}_feats.png", dpi=300)
+    plt.savefig(outfile, dpi=300)
     return reduced_df
 
 
-def filter_outliers(df, q_min=0.001, q_max=0.999):
+def filter_outliers(df, outdir, q_min=0.001, q_max=0.999):
     """ 
     This function is inspired from Day13-inclass 
     
@@ -72,6 +75,8 @@ def filter_outliers(df, q_min=0.001, q_max=0.999):
     ----------
     df : pandas.DataFrame
         Input DataFrame containing molecular descriptors.
+    outdir : str
+        Output directory to save plots to.
     q_min : float, optional
         Lower percentile threshold for filtering. Default is 0.001.
     q_max : float, optional
@@ -85,8 +90,8 @@ def filter_outliers(df, q_min=0.001, q_max=0.999):
     Notes
     -----
     - The function saves histograms of unfiltered and filtered data as:
-      - `../results/hist_unfiltered.png`
-      - `../results/hist_filtered.png`
+      - `<outdir>/hist_unfiltered.png`
+      - `<outdir>/hist_filtered.png`
     - Features dominated by zeros (e.g., NumRotatableBonds) are preserved.
 
     Examples
@@ -94,10 +99,11 @@ def filter_outliers(df, q_min=0.001, q_max=0.999):
     >>> clean_df = filter_outliers(df, q_min=0.01, q_max=0.99)
     >>> clean_df.describe()
     """
-    # histogram of data before filtering 
+    # histogram of data before filtering
+    outfile = os.path.join(outdir,"hist_unfiltered.png") 
     df.hist(figsize=(10,10), bins=50)
     plt.tight_layout()  # make sure subplots don't overlap
-    plt.savefig("../results/hist_unfiltered.png", dpi=300)
+    plt.savefig(outfile, dpi=300)
 
     # define a percentile value range for features
     perc_range = pd.DataFrame([df.quantile(q=q_min, axis=0), df.quantile(q=q_max, axis=0)])
@@ -109,13 +115,14 @@ def filter_outliers(df, q_min=0.001, q_max=0.999):
         # include features that have values less than or equal to top 99% of data
         df = df[df[feat] <= perc_range[feat].iloc[1,]]
     
+    outfile = os.path.join(outdir,"hist_filtered.png")
     df.hist(figsize=(10,10), bins=50)
     plt.tight_layout()  # make sure subplots don't overlap
-    plt.savefig("../results/hist_filtered.png", dpi=300)
+    plt.savefig(outfile, dpi=300)
     
     return df
 
-def log_transform(df, exclude=None, skew_thresh=1.0):
+def log_transform(df, outdir, exclude=None, skew_thresh=1.0):
     """
     Apply log2 transformation to columns with high positive skewness.
 
@@ -123,6 +130,8 @@ def log_transform(df, exclude=None, skew_thresh=1.0):
     ----------
     df : pandas.DataFrame
         Input DataFrame containing molecular descriptors.
+    outdir : str
+        Output directory to save plots to.
     exclude : list of str, optional
         Columns to exclude from transformation. Default is None.
     skew_thresh : float, optional
@@ -139,7 +148,7 @@ def log_transform(df, exclude=None, skew_thresh=1.0):
     - The function only applies the transformation to columns where
       all values are positive.
     - A histogram of the transformed data is saved as:
-      `../results/hist_logged.png`.
+      `<outdir>/hist_logged.png`.
 
     Examples
     --------
@@ -153,9 +162,12 @@ def log_transform(df, exclude=None, skew_thresh=1.0):
             continue
         if skewness[col] >= skew_thresh and (df[col] > 0).all():
             df[col] = np.log2(df[col])
+    
+    outfile = os.path.join(outdir,"hist_logged.png")
     df.hist(figsize=(10,10), bins=50)
     plt.tight_layout()  # make sure subplots don't overlap
-    plt.savefig("../results/hist_logged.png", dpi=300)
+    plt.savefig(outfile, dpi=300)
+    
     return df
 
 def split_data(df, rand_state=42):

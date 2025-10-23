@@ -1,6 +1,6 @@
 """
 Author: Rana Elladki
-Data: 10/01/2025
+Date: 10/01/2025
 Description: Parse through xyz files containing molecules from QM9 database and 
                 saves into pandas dataframe
 """
@@ -29,7 +29,10 @@ def safe_float(x):
     """
     if isinstance(x, str) and "*^" in x:
         x = x.replace("*^", "e")
-    return float(x)
+    try:
+        return float(x)
+    except:
+        raise ValueError(f"Cannot convert '{x}' to float.")
 
 
 def parse_xyz_file(filename):
@@ -110,7 +113,7 @@ def parse_xyz_file(filename):
     }
 
 
-def parse_xyz_folder(folder, as_dataframe=False, cache_file="xyz_data.parquet", check_cache=True):
+def parse_xyz_folder(folder, as_dataframe=True, cache_file="xyz_data.parquet", check_cache=True):
     """
     Parse all .xyz files in a spcified folder and save formatted output into list 
         or pandas dataframe. Uses caching for speed. If check_cache=True, checks
@@ -121,7 +124,7 @@ def parse_xyz_folder(folder, as_dataframe=False, cache_file="xyz_data.parquet", 
     ----------
     folder: str
         Folder containing .xyz files.
-    as_dataframe: bool, default=False
+    as_dataframe: bool, default=True
         Whether to return data as a pandas dataframe
     cache_file: str, default='xyz_data.parquet'
         Path to cache file for storing parsed data.
@@ -141,6 +144,9 @@ def parse_xyz_folder(folder, as_dataframe=False, cache_file="xyz_data.parquet", 
                 check_cache=True)
     """
     cache_path = os.path.join(folder, cache_file)
+    # If folder does not exist, raise FileNotFoundError
+    if not os.path.exists(folder):
+        raise FileNotFoundError(f"The folder '{folder}' does not exist or is not accessible.")
 
     # If cache exists and we allow cache, just load
     if check_cache and os.path.exists(cache_path):

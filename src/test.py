@@ -86,9 +86,19 @@ atom = [{'charge': -0.318566, 'element': 'C', 'x': -0.1683471021, 'y': 1.3993278
 
 molecule = [{'ID': 133001}]
 molecule[0]["COORDS"]=atom
-print(compute_rg2(molecule))
-     
 
+
+def mol_wts(df):
+    from rdkit.Chem import Descriptors
+    wts = []
+    for row in df.itertuples(index=False):
+        smiles = row.smiles_gdb9
+        mol = Chem.MolFromSmiles(smiles)
+        wts.append(Descriptors.MolWt(mol))
+
+    return wts
+     
+data_dir = "/mnt/home/elladki1/CMSE802/Final_Project/cmse802_project/data/raw_data"
 
 
 

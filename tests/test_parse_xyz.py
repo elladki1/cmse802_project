@@ -50,7 +50,7 @@ class TestParseXYZFolder(unittest.TestCase):
         mols_lst = parse_xyz_folder(TEST_DIR, as_dataframe=False, check_cache=False)
 
         self.assertIsInstance(mols_lst, list)
-        self.assertEqual(len(mols_lst), 2)
+        self.assertEqual(len(mols_lst), 3)
     
     def test_parse_to_df(self):
         mols_df = parse_xyz_folder(TEST_DIR, check_cache=False)

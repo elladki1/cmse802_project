@@ -7,14 +7,10 @@ using RDKit, Mordred, and related chemistry libraries.
 Provides functions to parse molecules, compute topological indices,
 Boltzmann weights, and radius of gyration squared (Rg²).
 """
-from parse_xyz import parse_xyz_folder
 from rdkit import Chem
 from rdkit.Chem import Descriptors, GetPeriodicTable
 from mordred import WienerIndex, ZagrebIndex
-from multiprocessing import Pool, cpu_count
 import numpy as np
-import time
-import pandas as pd
 
 
 ptable = GetPeriodicTable()
@@ -28,13 +24,13 @@ def get_small_molec(df, mw_cutoff=300):
     ----------
     df : pandas.DataFrame
         Input data with SMILES strings and molecular properties.
-    mw_cutoff : int, default=300
-        Molecular weights cutoff to define small molecules.
+    mw_cutoff : int, optional 
+        Molecular weights cutoff to define small molecules. Default is 300
     
     Returns
     -------
     list of dict
-        Each dictionary contains:
+        List of dictionaries with keys:
         - 'ID' : int
             Molecule ID.
         - 'SMILES' : str
@@ -44,18 +40,21 @@ def get_small_molec(df, mw_cutoff=300):
     
     Examples
     --------
-    >>> mols_arr = get_small_molecules(df)
+    >>> mols_arr = get_small_molec(df)
     >>> mols[0]['MW']
     58.12
     """
     small_mols = []
     for row in df.itertuples(index=False):
         smiles = row.smiles_gdb9
+        # Convert SMILES to rdKit molecule
         mol = Chem.MolFromSmiles(smiles)
         if mol is None:
-            continue
+            continue # skip invalid smiles
+        # Compute molecular weight
         mol_weight = Descriptors.MolWt(mol)
         if mol_weight <= mw_cutoff:
+            # Add molecules with molecular weight under cutoff
             small_mols.append({
                 "ID": row.id,
                 "SMILES": smiles,
@@ -76,7 +75,7 @@ def get_atom_coords(df):
     Returns
     -------
     list of dict
-        Each dictionary contains:
+        List of dictionaries with keys:
         - 'ID' : int
             Molecule ID.
         - 'COORDS' : list of dict
@@ -88,11 +87,12 @@ def get_atom_coords(df):
     >>> coords[0]['COORDS'][0]['element']
     'C'
     """
+    # return a list of dictionaries containing ID and atomic coordinates
     return [{"ID": row.id, "COORDS": row.atoms} for row in df.itertuples(index=False)]
 
 def get_wiener_idx(mol):
     """
-    Calculate the Wiender index for a molecule using Mordred. 
+    Calculate the Wiener index for a molecule using Mordred. 
 
     The Wiener index is the sum of all shortest path distances between atom
     pairs in the molecule. 
@@ -113,6 +113,7 @@ def get_wiener_idx(mol):
     >>> get_wiener_index(mol)
     9
     """
+    # Inirialize WienerIndex calculator
     wiener_index = WienerIndex.WienerIndex()
     return wiener_index(mol)
         
@@ -160,10 +161,10 @@ def get_zagreb_index(mol):
 
     Returns
     -------
-    tuple of int
-        (Z1, Z2) where:
-        - Z1 : first Zagreb index
-        - Z2 : second Zagreb index
+    Z1 : int 
+        First Zagreb index
+    Z2 : int
+        Second Zagreb index
     
     Examples
     --------
@@ -171,6 +172,7 @@ def get_zagreb_index(mol):
     >>> get_zagreb_index(mol)
     (12, 9)
     """
+    # Initialize Mordred Zagreb Index calulators
     zagreb_idx1 = ZagrebIndex.ZagrebIndex(1)
     zagreb_idx2 = ZagrebIndex.ZagrebIndex(2)
     z1 = zagreb_idx1(mol)
@@ -208,11 +210,14 @@ def compute_rg2(molecule):
     0.0
     """
     coords = molecule['COORDS']
-    
+
+    # Get atomic masses
     masses = np.array([ptable.GetAtomicWeight(atom['element']) for atom in coords])
+    # Extract 3D positions
     positions = np.array([[atom['x'], atom['y'], atom['z']] for atom in coords])
     
     total_mass = masses.sum()
+    # Get center of mass
     com = np.average(positions, axis=0, weights=masses)
     
     rg2 = np.sum(masses * np.sum((positions - com)**2, axis=1)) / total_mass
@@ -226,10 +231,11 @@ def compute_boltzmann_weights(df, energy="G", temp=298.15):
     ----------
     df : pandas.DataFrame
         Input data containing energies and SMILES strings.
-    energy : str, default="G"
-        Column name containing Gibbs free energy (in Hartree).
-    temp : float, default=298.15
-        Temperature in Kelvin.
+    energy : str, optional
+        Column name containing energy to use for Boltzmann-weight calculation (in Hartree). 
+        Default is "G"
+    temp : float, optional
+        Temperature in Kelvin (K). Default is 298.15.
     
     Returns
     -------
@@ -253,17 +259,16 @@ def compute_boltzmann_weights(df, energy="G", temp=298.15):
 
     bw_dict = {}
     count = 0
-    # Group by SMILES
+    # Group conformers by SMILES
     for smiles, group in df.groupby("smiles_gdb9"):
         energies = group[energy].values
         ids = group["id"].values
-
 
         # Shift energies to improve numerical stability
         min_energy = np.min(energies)
         shifted_energies = (energies - min_energy)*h_to_kj_mol
 
-        # Compute Boltzmann factors
+        # Compute Boltzmann factors and normalize
         boltz_factors = np.exp(-shifted_energies / (R * temp))
         total = np.sum(boltz_factors)
         weights = boltz_factors / total
@@ -273,6 +278,7 @@ def compute_boltzmann_weights(df, energy="G", temp=298.15):
 
         if len(group) > 1:
             count += 1
+
     return bw_dict, count
 
 def get_rdkit_desc(desc_dict, mol):
@@ -295,12 +301,13 @@ def get_rdkit_desc(desc_dict, mol):
         try:
             desc_dict[desc] = fnc(mol)
         except:
-            desc_dict[desc] = None
+            desc_dict[desc] = None # If descriptor fails, store None
     return desc_dict 
 
 def build_desc_dict(smiles=None, coords=None):
     """
     Build a dictionary of descriptors for a molecule
+
     Parameters
     ----------
     smiles : str, optional
@@ -322,10 +329,16 @@ def build_desc_dict(smiles=None, coords=None):
     desc_dict = {}
 
     if smiles is not None:
-        mol = Chem.MolFromSmiles(smiles)
+        try:
+            mol = Chem.MolFromSmiles(smiles)
+        except:
+            raise ValueError(f"Invalid SMILES: {smiles}")
         if mol is None:
-            raise ValueError("Invalid SMILES")
+            raise ValueError(f"Invalid SMILES: {smiles}")
+        
+        # Compute rdKit descriptors
         desc_dict = get_rdkit_desc(desc_dict, mol)
+        # Compute topological descriptors
         desc_dict["WI"] = get_wiener_idx(mol)
         desc_dict["RI"] = get_randic_index(mol)
         z1, z2 = get_zagreb_index(mol)
@@ -333,6 +346,7 @@ def build_desc_dict(smiles=None, coords=None):
         desc_dict["Z2"] = z2
         
     if coords is not None:
+        # Compute radius of gyration 
         desc_dict["RG2"] = compute_rg2(coords)
     
     return desc_dict
@@ -340,7 +354,7 @@ def build_desc_dict(smiles=None, coords=None):
 def process_molecule(args):
     """
     Helper function for multiprocessing descriptor computation.
-    AI was used for assistance on this function
+    AI was used for assistance on this function.
 
     Parameters
     ----------
@@ -357,7 +371,9 @@ def process_molecule(args):
         Combined descriptor dictionary for the molecule.
     """
     mol_entry, coord_entry = args
+    # Compute all descriptors for a single molecule
     desc = build_desc_dict(mol_entry["SMILES"], coord_entry)
+    # Add ID and SMILES to descriptor dictionary
     desc["ID"] = mol_entry["ID"]
     desc["SMILES"] = mol_entry["SMILES"]
     

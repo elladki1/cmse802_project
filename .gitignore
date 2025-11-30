@@ -208,3 +208,6 @@ __marimo__/
 
 # ignore data file
 data/
+
+# ignore tests.py file
+src/test.py

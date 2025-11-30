@@ -2,7 +2,9 @@
 Author: Rana Elladki
 Date: 10/15/2025
 Description: Performs exploratory data analysis on molecular descriptor
-    datasets. It includes routines for correlation-based feature selection,
+    datasets. 
+    
+    It includes routines for correlation-based feature selection,
     outlier filtering, and log transformation of skewed data distributions. 
     After completing EDA, it splits the data into training, validation, and 
     testing sets.
@@ -14,7 +16,7 @@ import numpy as np
 import os
 from sklearn.model_selection import train_test_split
 
-def pearson_correlation(df, outdir, target='RG2', top_count=10):
+def pearson_correlation(df, outdir=None, target='RG2', top_count=20, draw=1):
     """
     Perform Pearson correlation coefficient analysis to identify descriptors
     that have the strongest relationship with the target variable (e.g., RG2).
@@ -23,12 +25,14 @@ def pearson_correlation(df, outdir, target='RG2', top_count=10):
     ----------
     df : pandas.DataFrame
         Input DataFrame containing molecular descriptors and the target variable.
-    outdir : str
+    outdir : str, optional
         Output directory to save plots to.
     target : str, optional
         Name of the target variable column. Default is 'RG2'.
     top_count : int, optional
-        Number of top correlated features to select. Default is 10.
+        Number of top correlated features to select. Default is 20.
+    draw : int, optional
+        Whether to plot a heatmap of feature correlations. Default is 1 (yes).
 
     Returns
     -------
@@ -53,34 +57,45 @@ def pearson_correlation(df, outdir, target='RG2', top_count=10):
     corr_pearson = df.corr(method='pearson')
     # get the rg2 correlation column and remove rg2's correlation with itself, because it is just 1
     rg2_corr = corr_pearson[target].drop(target).abs().sort_values(ascending=False)
+    # check number of features available
+    available_feats = len(rg2_corr)
+    # if less features available than specified in top count, use all available features
+    if top_count > available_feats:
+        print(f"Not enough features for defaulting {top_count}. "
+              f"Only {available_feats} available and were used.")
+        top_count = available_feats
     # get top 20 features
     strong_corr = rg2_corr.index[:top_count]
     # reduced descriptor dataframe
     reduced_df = df[strong_corr.tolist() + [target]]
     # get a heat map
-    outfile = os.path.join(outdir,f"corr_heatmap_top_{top_count}_feats.png")
-    plt.figure(figsize=(10,10))
-    sns.heatmap(reduced_df.corr(), cmap="coolwarm", center=0, annot=True, fmt=".2f")
-    plt.savefig(outfile, dpi=300)
+    if draw==1:
+        if outdir is None:
+           raise ValueError("draw=1 requires 'outdir' to be specified.")
+        outfile = os.path.join(outdir,f"corr_heatmap_top_{top_count}_feats.png")
+        plt.figure(figsize=(14,14))
+        sns.heatmap(reduced_df.corr(), cmap="coolwarm", center=0, annot=True, fmt=".2f")
+        plt.savefig(outfile, dpi=300)
+        plt.close()
     return reduced_df
 
 
-def filter_outliers(df, outdir, q_min=0.001, q_max=0.999):
+def filter_outliers(df, outdir=None, q_min=0.001, q_max=0.999, draw=1):
     """ 
-    This function is inspired from Day13-inclass 
-    
     Filter outliers based on percentile thresholds for each feature.
 
     Parameters
     ----------
     df : pandas.DataFrame
         Input DataFrame containing molecular descriptors.
-    outdir : str
+    outdir : str, optional
         Output directory to save plots to.
     q_min : float, optional
         Lower percentile threshold for filtering. Default is 0.001.
     q_max : float, optional
         Upper percentile threshold for filtering. Default is 0.999.
+    draw : int, optional
+        Whether to plot a heatmap of feature correlations. Default is 1 (yes).
 
     Returns
     -------
@@ -89,6 +104,7 @@ def filter_outliers(df, outdir, q_min=0.001, q_max=0.999):
 
     Notes
     -----
+    - This function is inspired from Day13-inclass.
     - The function saves histograms of unfiltered and filtered data as:
       - `<outdir>/hist_unfiltered.png`
       - `<outdir>/hist_filtered.png`
@@ -100,43 +116,50 @@ def filter_outliers(df, outdir, q_min=0.001, q_max=0.999):
     >>> clean_df.describe()
     """
     # histogram of data before filtering
-    outfile = os.path.join(outdir,"hist_unfiltered.png") 
-    df.hist(figsize=(10,10), bins=50)
-    plt.tight_layout()  # make sure subplots don't overlap
-    plt.savefig(outfile, dpi=300)
-
+    if draw==1:
+        if outdir is None:
+           raise ValueError("draw=1 requires 'outdir' to be specified.")
+        outfile = os.path.join(outdir,"hist_unfiltered.png") 
+        df.hist(figsize=(10,10), bins=50)
+        plt.tight_layout()  # make sure subplots don't overlap
+        plt.savefig(outfile, dpi=300)
+        plt.close()
     # define a percentile value range for features
     perc_range = pd.DataFrame([df.quantile(q=q_min, axis=0), df.quantile(q=q_max, axis=0)])
     
     for feat in df.columns[:-1]:
-        # these are small molecules, so most will have NumRotatableBonds=0 which will end up getting excluded, so don't remove outliers because data correctly mostly zeros
         # include features that have values greater than or equal to bottom 0.1% of data
         df = df[df[feat] >= perc_range[feat].iloc[0,]]
         # include features that have values less than or equal to top 99% of data
         df = df[df[feat] <= perc_range[feat].iloc[1,]]
     
-    outfile = os.path.join(outdir,"hist_filtered.png")
-    df.hist(figsize=(10,10), bins=50)
-    plt.tight_layout()  # make sure subplots don't overlap
-    plt.savefig(outfile, dpi=300)
-    
+    if draw==1:
+        if outdir is None:
+           raise ValueError("draw=1 requires 'outdir' to be specified.")
+        outfile = os.path.join(outdir,"hist_filtered.png")
+        df.hist(figsize=(10,10), bins=50)
+        plt.tight_layout()  # make sure subplots don't overlap
+        plt.savefig(outfile, dpi=300)
+        plt.close()
     return df
 
-def log_transform(df, outdir, exclude=None, skew_thresh=1.0):
+def log_transform(df, outdir=None, exclude=None, skew_thresh=1.0, draw=1):
     """
-    Apply log2 transformation to columns with high positive skewness.
+    Apply log2 transformation to columns with high skewness.
 
     Parameters
     ----------
     df : pandas.DataFrame
         Input DataFrame containing molecular descriptors.
-    outdir : str
+    outdir : str, optional
         Output directory to save plots to.
     exclude : list of str, optional
         Columns to exclude from transformation. Default is None.
     skew_thresh : float, optional
         Threshold above which skewed columns are log-transformed.
         Default is 1.0.
+    draw : int, optional
+        Whether to plot a heatmap of feature correlations. Default is 1 (yes).
 
     Returns
     -------
@@ -160,14 +183,16 @@ def log_transform(df, outdir, exclude=None, skew_thresh=1.0):
     for col in df.columns:
         if exclude!=None and col in exclude:
             continue
-        if skewness[col] >= skew_thresh and (df[col] > 0).all():
+        if np.abs(skewness[col]) >= skew_thresh and (df[col] > 0).all():
             df[col] = np.log2(df[col])
-    
-    outfile = os.path.join(outdir,"hist_logged.png")
-    df.hist(figsize=(10,10), bins=50)
-    plt.tight_layout()  # make sure subplots don't overlap
-    plt.savefig(outfile, dpi=300)
-    
+    if draw == 1:
+        if outdir is None:
+           raise ValueError("draw=1 requires 'outdir' to be specified.")
+        outfile = os.path.join(outdir, "hist_logged.png")
+        df.hist(figsize=(10,10), bins=50)
+        plt.tight_layout()  # make sure subplots don't overlap
+        plt.savefig(outfile, dpi=300)
+        plt.close()
     return df
 
 def split_data(df, rand_state=42):
@@ -178,13 +203,19 @@ def split_data(df, rand_state=42):
     ----------
     df : pandas.DataFrame
         Full dataset including target column 'RG2'.
-    rand_state : int, default=42
-        Random seed for reproducibility.
+    rand_state : int, optional
+        Random seed for reproducibility. Default is 42.
 
     Returns
     -------
-    tuple
-        (X_train, X_val, X_test, y_train, y_val, y_test)
+    tuple of pandas.Dataframe and pandas.Series
+        Contains:
+        - X_train
+        - X_val
+        - X_test
+        - y_train
+        - y_val
+        - y_test
 
     Examples
     --------

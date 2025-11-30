@@ -18,6 +18,7 @@ The layout of the directory is in the following structure:
 ├── docs - documentation files/
 │
 ├── notebooks - Jupyter notebooks for analysis and visualization/
+├──├── final_report - contains report summarizing project and results/
 │
 ├── results - contains project results (outputs and figures)/
 │

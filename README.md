@@ -29,5 +29,6 @@ The layout of the directory is in the following structure:
 ├── tests - unit tests/
 │
 ├── .gitignore
+├── CMSE 802 - Predicting RG2 of Small Molecules Using ML 
 └── README.md
 ```

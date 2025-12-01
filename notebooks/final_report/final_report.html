@@ -7511,22 +7511,6 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2f50ef94">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Report
-Your final report consists of a narrative text that explains what you did, why you did it, and how you went about it. You should break the notebook up into the following meaningful sections so that the instructor can follow the logical flow of your work:</p>
-<p>Background and Motivation: Provide some context for the problem and what research question(s) you set out to answer, or the hypothesis you are testing.</p>
-<p>Methodology: How did you go about answering your research question(s) or testing your hypothesis? What models did you use and why? How do you know that your model is performing well? Use schematics and figures where necessary to explain concepts.</p>
-<p>Results: What did you find when you carried out your methods? Support your work with visuals.</p>
-<p>Synthesis and Discussion: What did you learn from your results? What obstacles did you run into? What would you do differently next time? What is the answer to your question(s) and why?</p>
-</div>
-</div>
-</div>
-</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=eb0070a3">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -7709,7 +7693,7 @@ Your final report consists of a narrative text that explains what you did, why y
 <p>Outliers can distort model training. Since we want to understand the relationship of the features with the target property, we filter out outliers, possibly skewing that relationship.</p>
 <p>This concludes our exploratory data analysis, so we split the data into training, validation, and testing sets.
 First, we split the data randomly into 80% for training and 20% for testing. Then, the training set was split randomly again, with 75% for training and 25% for validation. The final split for the training, validation, and testing sets, was 60%, 20%, and 20% of the filtered data respectively. Five total machine learning models were trainined.</p>
-<p>The first set of models were linear regression models, implemented using LinearRegression from the scikit learn linear_model library. The first model was trained on the filtered data without any additional transformation. A second linear model was trained after applying a logarithmic transformation to all features.</p>
+<p>The first set of models were linear regression models, implemented using LinearRegression from the scikit learn linear_model library. The first model was trained on the filtered data without any additional transformation. A second linear model was trained after applying a logarithmic transformation to skewed features.</p>
 <p>Three additional models were artificial neural networks (ANNs), implemented using MLPRegressor from the scikit learn neural network, which implements a feed-forward artificial neural network. We also used GridSearchCV to perform hyperparameter tuning using 5-fold cross validation, to find the best model configuration. The three ANN variations were trained on:</p>
 <ol>
 <li>filtered data only,</li>
@@ -7805,7 +7789,7 @@ Evaluate the correlation between the predicted and true values.</li>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <p>The heatmap also shows the relationship of the features with each other. For example, Phi and Kappa2 have a 0.99 PCC, indicating a strong positive relationship. Most importantly, all selected descriptors exhibited a non-zero PCC with RG2, confirming that each feature has an impact on our target and should be captured in our traind models.</p>
-<p>TO examine feature distributions, we plotted the histograms of our raw feature and target data:</p>
+<p>To examine feature distributions, we plotted the histograms of our raw feature and target data:</p>
 </div>
 </div>
 </div>
@@ -7883,9 +7867,9 @@ Evaluate the correlation between the predicted and true values.</li>
 <ul>
 <li><code>hidden_layer_size</code>: (10,), (10, 20), (20,30), (10, 20, 30)</li>
 <li><code>batch_size</code>: 100, 200, 500</li>
-<li><code>learning_rate_init</code>: 0.01, 0.05, 0.</li>
+<li><code>learning_rate_init</code>: 0.01, 0.05, 0.1</li>
 </ul>
-<p>ALl five models were evaluated using $R^2$, RMSE, MSE, MAE, AND PC on the validation and testing set, as summarized below:</p>
+<p>All five models were evaluated using $R^2$, RMSE, MSE, MAE, AND PC on the validation and testing set, as summarized below:</p>
 </div>
 </div>
 </div>
@@ -8029,7 +8013,7 @@ Evaluate the correlation between the predicted and true values.</li>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>The ANN models outperformed LR models across all metrics. The model trained on standardized features achieved the best performance overall, with an $R^2$ of 0.926 on the testing set and the lower error values.</p>
+<p>The ANN models outperformed LR models across all metrics. The model trained on standardized features achieved the best performance overall, with an $R^2$ of 0.926 on the testing set and the lowest error values.</p>
 </div>
 </div>
 </div>
@@ -8131,7 +8115,7 @@ Evaluate the correlation between the predicted and true values.</li>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<p>Comparing the LR coefficent weights to the ANN SHAP scores, both models identified Kappa2 as the strongest feature negatively correlated with RG2, which is consistent with its interpretation as a measure of molecular branching compactness. However, several features showed model-dependent importance. The ANN assigned high importance to WI and Kappa1, while LR assigned them a relatively low weight. THis suggests that the ANN was able to capture nonliner relationships between topological descriptors and RG2 that the LR could not.</p>
+<p>Comparing the LR coefficent weights to the ANN SHAP scores, both models identified Kappa2 as the strongest feature negatively correlated with RG2, which is consistent with its interpretation as a measure of molecular branching compactness. However, several features showed model-dependent importance. The ANN assigned high importance to WI and Kappa1, while LR assigned them a relatively low weight. This suggests that the ANN was able to capture nonliner relationships between topological descriptors and RG2 that the LR could not.</p>
 <p>From a polymer-physics perspective, WI should correlate strongly with RG2, since both increase with molecular branching. Since the ANN relfects this physical trend more clearly than LR, indicates that the ANN is not only statistically superior but also more scientifically meaningful.</p>
 </div>
 </div>

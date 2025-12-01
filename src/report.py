@@ -1,7 +1,7 @@
 """
 Author: Rana Elladki
 Date: 10/15/2025
-Description: Copy of main CLI. Used to generate plots as needed for report. 
+Description: Copy of main CLI. Used to generate plots as needed for report. Not relevant to actual project pipeline.
 
 Usage
 -----
